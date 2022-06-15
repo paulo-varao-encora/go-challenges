@@ -6,8 +6,7 @@ import (
 )
 
 func main() {
-	dbConn, _ := repository.NewConnection()
-	crud := repository.TaskCrud{DbConn: dbConn}
+	crud, _ := repository.NewTaskCrud()
 
 	task := repository.Task{Name: "Sample task", Completed: false}
 

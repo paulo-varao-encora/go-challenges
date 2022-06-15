@@ -17,6 +17,16 @@ type TaskCrud struct {
 	DbConn *sql.DB
 }
 
+func NewTaskCrud() (*TaskCrud, error) {
+	dbConn, err := NewConnection()
+
+	if err != nil {
+		return nil, fmt.Errorf("connecting to database failed, %v", err)
+	}
+
+	return &TaskCrud{DbConn: dbConn}, nil
+}
+
 func (c *TaskCrud) RetrieveAll() ([]Task, error) {
 
 	rows, err := c.DbConn.Query("SELECT * FROM tasks")

@@ -13,13 +13,12 @@ var defaultTasks = []Task{
 }
 
 func TestCRUD(t *testing.T) {
-	db, err := NewConnection()
+
+	crud, err := NewTaskCrud()
 
 	if err != nil {
-		t.Errorf("failed to connect to database, %v", err)
+		t.Errorf("failed to create new task crud, %v", err)
 	}
-
-	crud := TaskCrud{db}
 
 	t.Run("list all tasks", func(t *testing.T) {
 		currentTasks, err := crud.RetrieveAll()
