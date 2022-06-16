@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -103,12 +104,14 @@ func (c *TaskCrud) Update(task Task) (int64, error) {
 	return result.RowsAffected()
 }
 
+// to create env variables run: source env.sh
 func NewConnection() (*sql.DB, error) {
+	address := os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT")
 	cfg := mysql.Config{
-		User:   "root",
-		Passwd: "zq1o0m",
+		User:   os.Getenv("DB_USER"),
+		Passwd: os.Getenv("DB_PASS"),
 		Net:    "tcp",
-		Addr:   "127.0.0.1:3306",
+		Addr:   address,
 		DBName: "go_challenges",
 	}
 
