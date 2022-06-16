@@ -46,8 +46,7 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter) {
 	tasks, err := t.crud.RetrieveAll()
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, err.Error())
+		errorHandler(w, http.StatusInternalServerError, err.Error())
 	} else {
 		w.Header().Set("content-type", jsonContentType)
 		json.NewEncoder(w).Encode(tasks)
@@ -56,14 +55,27 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter) {
 
 func createTask(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 	var task repository.Task
-	json.NewDecoder(r.Body).Decode(&task)
 
-	id, err := t.crud.Create(task)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, err.Error())
+	if r.Body == nil {
+		errorHandler(w, http.StatusBadRequest, "can't create an empty task, body is nil")
 	} else {
-		fmt.Fprint(w, id)
+		json.NewDecoder(r.Body).Decode(&task)
+
+		if task.Name == "" {
+			errorHandler(w, http.StatusBadRequest, "can't create a nameless task")
+		} else {
+			id, err := t.crud.Create(task)
+
+			if err != nil {
+				errorHandler(w, http.StatusInternalServerError, err.Error())
+			} else {
+				fmt.Fprint(w, id)
+			}
+		}
 	}
+}
+
+func errorHandler(w http.ResponseWriter, status int, msg string) {
+	w.WriteHeader(status)
+	fmt.Fprintf(w, msg)
 }

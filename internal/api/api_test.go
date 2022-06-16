@@ -19,6 +19,9 @@ var defaultTasks = []repository.Task{
 	{ID: 4, Name: "Exercise", Completed: true},
 }
 
+var request *http.Request
+var response *httptest.ResponseRecorder
+
 func TestCrudServer(t *testing.T) {
 	server, err := NewTaskServer()
 
@@ -27,15 +30,7 @@ func TestCrudServer(t *testing.T) {
 	}
 
 	t.Run("list all tasks", func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodGet, "/tasks", nil)
-
-		if err != nil {
-			t.Errorf("request failed, %v", err)
-		}
-
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
+		updateRequestAndResponse(t, server, http.MethodGet, "/tasks", nil)
 
 		assertStatus(t, response.Code, http.StatusOK)
 		assertContentType(t, response, jsonContentType)
@@ -45,26 +40,33 @@ func TestCrudServer(t *testing.T) {
 	})
 
 	t.Run("create a new task and returns its ID", func(t *testing.T) {
-		newTask := repository.Task{Name: "Sample task", Completed: true}
-		body, err := json.Marshal(newTask)
+		body := newTask(t, "Sample task", true)
 
-		if err != nil {
-			t.Errorf("converting task to json failed, %v", err)
-		}
-
-		request, err := http.NewRequest(http.MethodPost, "/tasks", bytes.NewBuffer(body))
-
-		if err != nil {
-			t.Errorf("request failed, %v", err)
-		}
-
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
+		updateRequestAndResponse(t, server, http.MethodPost, "/tasks", body)
 
 		assertStatus(t, response.Code, http.StatusOK)
 		assertNewId(t, response.Body.String())
 	})
+
+	t.Run("return bad request when creating an empty task", func(t *testing.T) {
+		body := newTask(t, "", false) // nil
+
+		updateRequestAndResponse(t, server, http.MethodPost, "/tasks", body)
+
+		assertStatus(t, response.Code, http.StatusBadRequest)
+	})
+}
+
+func newTask(t testing.TB, name string, completed bool) *bytes.Buffer {
+	t.Helper()
+	newTask := repository.Task{Name: name, Completed: completed}
+	body, err := json.Marshal(newTask)
+
+	if err != nil {
+		t.Errorf("converting task to json failed, %v", err)
+	}
+
+	return bytes.NewBuffer(body)
 }
 
 func getTasksFromResponse(t testing.TB, body io.Reader) (tasks []repository.Task) {
@@ -111,4 +113,19 @@ func assertNewId(t testing.TB, got string) {
 	if id < 5 {
 		t.Errorf("got %v expeted greater than 4", got)
 	}
+}
+
+func updateRequestAndResponse(t testing.TB, server *TaskServer, method, url string, body io.Reader) {
+	t.Helper()
+
+	var err error
+	request, err = http.NewRequest(method, url, body)
+
+	if err != nil {
+		t.Errorf("request failed, %v", err)
+	}
+
+	response = httptest.NewRecorder()
+
+	server.ServeHTTP(response, request)
 }
