@@ -85,11 +85,37 @@ func TestCrudServer(t *testing.T) {
 		}
 	})
 
-	t.Run("send bad request response on invalid id", func(t *testing.T) {
+	t.Run("send bad request response case find invalid id", func(t *testing.T) {
 		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/100", nil)
 
 		assertStatus(t, response.Code, http.StatusBadRequest)
 	})
+
+	t.Run("update single task by its id", func(t *testing.T) {
+		body := newTask(t, "Sample task updated", false)
+
+		updateRequestAndResponse(t, server, http.MethodPut, "/tasks/5", body)
+
+		assertStatus(t, response.Code, http.StatusOK)
+	})
+
+	t.Run("send bad request response case update invalid id", func(t *testing.T) {
+		body := newTask(t, "Sample task updated", false)
+
+		updateRequestAndResponse(t, server, http.MethodPut, "/tasks/100", body)
+
+		assertStatus(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("send bad request response case update having no changes", func(t *testing.T) {
+		body := newTask(t, "Sample task updated", false)
+
+		updateRequestAndResponse(t, server, http.MethodPut, "/tasks/5", body)
+
+		assertStatus(t, response.Code, http.StatusBadRequest)
+	})
+
+	// TODO: test invalid methods in each endpoint
 }
 
 func newTask(t testing.TB, name string, completed bool) *bytes.Buffer {
