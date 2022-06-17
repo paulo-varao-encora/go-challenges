@@ -75,14 +75,7 @@ func TestCrudServer(t *testing.T) {
 	t.Run("redirect to /tasks case id is empty", func(t *testing.T) {
 		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/", nil)
 
-		assertStatus(t, response.Code, http.StatusOK)
-		assertContentType(t, response, jsonContentType)
-
-		got := getTasksFromResponse(t, response.Body)
-
-		if len(got) == 0 {
-			t.Error("no task was found")
-		}
+		taskRedirect(t)
 	})
 
 	t.Run("send bad request response case find invalid id", func(t *testing.T) {
@@ -124,6 +117,43 @@ func TestCrudServer(t *testing.T) {
 		updateRequestAndResponse(t, server, http.MethodPost, "/tasks/1", nil)
 		assertStatus(t, response.Code, http.StatusBadRequest)
 	})
+
+	t.Run("list all completed tasks", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodGet, "/tasks?completed=true", nil)
+
+		assertStatus(t, response.Code, http.StatusOK)
+		assertContentType(t, response, jsonContentType)
+
+		got := getTasksFromResponse(t, response.Body)
+		gotSize := len(got)
+
+		if gotSize != 2 {
+			t.Errorf("got %v, expected 2", gotSize)
+		}
+	})
+
+	t.Run("redirect to /tasks case completed is empty", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodGet, "/tasks?completed=", nil)
+
+		taskRedirect(t)
+	})
+
+	t.Run("send bad request response case completed param is invalid", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodGet, "/tasks?completed=x", nil)
+		assertStatus(t, response.Code, http.StatusBadRequest)
+	})
+}
+
+func taskRedirect(t testing.TB) {
+	t.Helper()
+	assertStatus(t, response.Code, http.StatusOK)
+	assertContentType(t, response, jsonContentType)
+
+	got := getTasksFromResponse(t, response.Body)
+
+	if len(got) == 0 {
+		t.Error("no task was found")
+	}
 }
 
 func newTask(t testing.TB, name string, completed bool) *bytes.Buffer {

@@ -41,7 +41,7 @@ func (t *TaskServer) tasksHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		processRequestBodyTask(t, w, r, -1, createTask)
 	case http.MethodGet:
-		retrieveTasks(t, w)
+		retrieveTasks(t, w, r)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -51,7 +51,7 @@ func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 
 	if idStr == "" {
-		retrieveTasks(t, w)
+		retrieveTasks(t, w, r)
 	} else {
 		id, err := strconv.Atoi(idStr)
 
@@ -72,10 +72,31 @@ func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func retrieveTasks(t *TaskServer, w http.ResponseWriter) {
+func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
+	filter := r.URL.Query().Get("completed")
 	tasks, err := t.crud.RetrieveAll()
 
-	sendTasks(w, tasks, err)
+	if filter == "" {
+		sendTasks(w, tasks, err)
+	} else {
+		completed, err := strconv.ParseBool(filter)
+
+		if err != nil {
+			errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to filter param, %v", err))
+		} else {
+			tasks, err := t.crud.RetrieveAll()
+
+			var filteredTasks []repository.Task
+
+			for _, task := range tasks {
+				if task.Completed == completed {
+					filteredTasks = append(filteredTasks, task)
+				}
+			}
+
+			sendTasks(w, filteredTasks, err)
+		}
+	}
 }
 
 func createTask(t *TaskServer, w http.ResponseWriter, task repository.Task) {
