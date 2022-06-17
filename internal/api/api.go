@@ -42,6 +42,8 @@ func (t *TaskServer) tasksHandler(w http.ResponseWriter, r *http.Request) {
 		processRequestBodyTask(t, w, r, -1, createTask)
 	case http.MethodGet:
 		retrieveTasks(t, w)
+	default:
+		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 
@@ -62,6 +64,8 @@ func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
 				processRequestBodyTask(t, w, r, int64(id), updateTask)
 			case http.MethodGet:
 				retrieveTaskByID(t, w, int64(id))
+			default:
+				w.WriteHeader(http.StatusBadRequest)
 			}
 
 		}

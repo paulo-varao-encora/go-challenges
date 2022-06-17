@@ -115,7 +115,15 @@ func TestCrudServer(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusBadRequest)
 	})
 
-	// TODO: test invalid methods in each endpoint
+	t.Run("send bad request response case method is invalid for /tasks", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodPut, "/tasks", nil)
+		assertStatus(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("send bad request response case method is invalid for /tasks/id", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodPost, "/tasks/1", nil)
+		assertStatus(t, response.Code, http.StatusBadRequest)
+	})
 }
 
 func newTask(t testing.TB, name string, completed bool) *bytes.Buffer {
