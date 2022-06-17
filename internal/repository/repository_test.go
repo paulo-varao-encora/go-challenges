@@ -1,5 +1,10 @@
 package repository
 
+/*
+	Please run create_tables.sql before running the tests
+	in order to make sure they are all going to pass
+*/
+
 import (
 	"reflect"
 	"testing"
@@ -31,7 +36,7 @@ func TestCRUD(t *testing.T) {
 	})
 
 	t.Run("find task by id", func(t *testing.T) {
-		task, err := crud.FindById(1)
+		task, err := crud.FindByID(1)
 
 		if err != nil {
 			t.Errorf("failed to retrieve task, %v", err)
@@ -82,6 +87,20 @@ func TestCRUD(t *testing.T) {
 
 		if rowsAffected != 1 {
 			t.Errorf("got %v want 1", rowsAffected)
+		}
+	})
+
+	t.Run("filter completed tasks", func(t *testing.T) {
+		tasks, err := crud.Filter(true)
+
+		if err != nil {
+			t.Errorf("failed to filter tasks, %v", err)
+		}
+
+		got := len(tasks)
+
+		if got != 3 {
+			t.Errorf("got %v want 3", got)
 		}
 	})
 }

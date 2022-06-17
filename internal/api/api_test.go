@@ -1,5 +1,10 @@
 package api
 
+/*
+	Please run create_tables.sql before running the tests
+	in order to make sure they are all going to pass
+*/
+
 import (
 	"bytes"
 	"encoding/json"

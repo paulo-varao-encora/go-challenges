@@ -74,9 +74,9 @@ func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 	filter := r.URL.Query().Get("completed")
-	tasks, err := t.crud.RetrieveAll()
 
 	if filter == "" {
+		tasks, err := t.crud.RetrieveAll()
 		sendTasks(w, tasks, err)
 	} else {
 		completed, err := strconv.ParseBool(filter)
@@ -84,17 +84,8 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to filter param, %v", err))
 		} else {
-			tasks, err := t.crud.RetrieveAll()
-
-			var filteredTasks []repository.Task
-
-			for _, task := range tasks {
-				if task.Completed == completed {
-					filteredTasks = append(filteredTasks, task)
-				}
-			}
-
-			sendTasks(w, filteredTasks, err)
+			tasks, err := t.crud.Filter(completed)
+			sendTasks(w, tasks, err)
 		}
 	}
 }
@@ -111,7 +102,7 @@ func createTask(t *TaskServer, w http.ResponseWriter, task repository.Task) {
 }
 
 func retrieveTaskByID(t *TaskServer, w http.ResponseWriter, id int64) {
-	task, err := t.crud.FindById(id)
+	task, err := t.crud.FindByID(id)
 
 	if err != nil && strings.Contains(err.Error(), "sql: no rows in result set") {
 		errorHandler(w, http.StatusBadRequest, "invalid task id")

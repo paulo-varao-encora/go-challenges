@@ -15,7 +15,7 @@ type Task struct {
 }
 
 type TaskCrud struct {
-	DbConn *sql.DB
+	DBConn *sql.DB
 }
 
 func NewTaskCrud() (*TaskCrud, error) {
@@ -25,36 +25,24 @@ func NewTaskCrud() (*TaskCrud, error) {
 		return nil, fmt.Errorf("connecting to database failed, %v", err)
 	}
 
-	return &TaskCrud{DbConn: dbConn}, nil
+	return &TaskCrud{DBConn: dbConn}, nil
 }
 
 func (c *TaskCrud) RetrieveAll() ([]Task, error) {
 
-	rows, err := c.DbConn.Query("SELECT * FROM tasks")
+	rows, err := c.DBConn.Query("SELECT * FROM tasks")
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list all tasks, %v", err)
 	}
 	defer rows.Close()
 
-	var tasks []Task
-
-	for rows.Next() {
-		var t Task
-
-		if err := rows.Scan(&t.ID, &t.Name, &t.Completed); err != nil {
-			return nil, fmt.Errorf("failed to convert row into task, %v", err)
-		}
-
-		tasks = append(tasks, t)
-	}
-
-	return tasks, nil
+	return getTasksFromRows(rows)
 }
 
-func (c *TaskCrud) FindById(id int64) (Task, error) {
+func (c *TaskCrud) FindByID(id int64) (Task, error) {
 
-	row := c.DbConn.QueryRow("SELECT * FROM tasks WHERE ID = ?", id)
+	row := c.DBConn.QueryRow("SELECT * FROM tasks WHERE ID = ?", id)
 
 	var task Task
 
@@ -67,7 +55,7 @@ func (c *TaskCrud) FindById(id int64) (Task, error) {
 
 func (c *TaskCrud) Create(t Task) (int64, error) {
 
-	result, err := c.DbConn.Exec("INSERT INTO tasks (Name, Completed) VALUES (?, ?)",
+	result, err := c.DBConn.Exec("INSERT INTO tasks (Name, Completed) VALUES (?, ?)",
 		t.Name, t.Completed)
 
 	if err != nil {
@@ -84,7 +72,7 @@ func (c *TaskCrud) Create(t Task) (int64, error) {
 }
 
 func (c *TaskCrud) Delete(id int64) (int64, error) {
-	result, err := c.DbConn.Exec("DELETE FROM tasks WHERE ID = ?", id)
+	result, err := c.DBConn.Exec("DELETE FROM tasks WHERE ID = ?", id)
 
 	if err != nil {
 		return 0, fmt.Errorf("failed to execute delete statement, %v", err)
@@ -94,7 +82,7 @@ func (c *TaskCrud) Delete(id int64) (int64, error) {
 }
 
 func (c *TaskCrud) Update(task Task) (int64, error) {
-	result, err := c.DbConn.Exec("UPDATE tasks SET Name=?, Completed=? WHERE ID = ?",
+	result, err := c.DBConn.Exec("UPDATE tasks SET Name=?, Completed=? WHERE ID = ?",
 		task.Name, task.Completed, task.ID)
 
 	if err != nil {
@@ -102,6 +90,17 @@ func (c *TaskCrud) Update(task Task) (int64, error) {
 	}
 
 	return result.RowsAffected()
+}
+
+func (c *TaskCrud) Filter(completed bool) ([]Task, error) {
+	rows, err := c.DBConn.Query("SELECT * FROM tasks WHERE Completed = ?", completed)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter tasks, %v", err)
+	}
+	defer rows.Close()
+
+	return getTasksFromRows(rows)
 }
 
 // to create env variables run: source env.sh
@@ -116,4 +115,20 @@ func NewConnection() (*sql.DB, error) {
 	}
 
 	return sql.Open("mysql", cfg.FormatDSN())
+}
+
+func getTasksFromRows(rows *sql.Rows) ([]Task, error) {
+	var tasks []Task
+
+	for rows.Next() {
+		var t Task
+
+		if err := rows.Scan(&t.ID, &t.Name, &t.Completed); err != nil {
+			return nil, fmt.Errorf("failed to convert row into task, %v", err)
+		}
+
+		tasks = append(tasks, t)
+	}
+
+	return tasks, nil
 }
