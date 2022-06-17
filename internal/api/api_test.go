@@ -45,13 +45,48 @@ func TestCrudServer(t *testing.T) {
 		updateRequestAndResponse(t, server, http.MethodPost, "/tasks", body)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertNewId(t, response.Body.String())
+		assertNewID(t, response.Body.String())
 	})
 
 	t.Run("return bad request when creating an empty task", func(t *testing.T) {
 		body := newTask(t, "", false) // nil
 
 		updateRequestAndResponse(t, server, http.MethodPost, "/tasks", body)
+
+		assertStatus(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("get single task by its ID", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/1", nil)
+
+		assertStatus(t, response.Code, http.StatusOK)
+		assertContentType(t, response, jsonContentType)
+
+		task := repository.Task{}
+		err := json.Unmarshal(response.Body.Bytes(), &task)
+
+		if err != nil {
+			t.Errorf("converting response body to task failed, %v", err)
+		}
+
+		assertSingleTask(t, task, defaultTasks[0])
+	})
+
+	t.Run("redirect to /tasks case id is empty", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/", nil)
+
+		assertStatus(t, response.Code, http.StatusOK)
+		assertContentType(t, response, jsonContentType)
+
+		got := getTasksFromResponse(t, response.Body)
+
+		if len(got) == 0 {
+			t.Error("no task was found")
+		}
+	})
+
+	t.Run("send bad request response on invalid id", func(t *testing.T) {
+		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/100", nil)
 
 		assertStatus(t, response.Code, http.StatusBadRequest)
 	})
@@ -102,7 +137,7 @@ func assertTasks(t testing.TB, got, want []repository.Task) {
 	}
 }
 
-func assertNewId(t testing.TB, got string) {
+func assertNewID(t testing.TB, got string) {
 	t.Helper()
 	id, err := strconv.Atoi(got)
 
@@ -112,6 +147,13 @@ func assertNewId(t testing.TB, got string) {
 
 	if id < 5 {
 		t.Errorf("got %v expeted greater than 4", got)
+	}
+}
+
+func assertSingleTask(t testing.TB, got, want repository.Task) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got %v want %v", got, want)
 	}
 }
 
