@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"strconv"
 	"testing"
@@ -23,6 +24,8 @@ var defaultTasks = []repository.Task{
 	{ID: 3, Name: "Buy groceries", Completed: false},
 	{ID: 4, Name: "Exercise", Completed: true},
 }
+
+var bearerToken = os.Getenv("API_TOKEN")
 
 var request *http.Request
 var response *httptest.ResponseRecorder
@@ -147,6 +150,17 @@ func TestCrudServer(t *testing.T) {
 		updateRequestAndResponse(t, server, http.MethodGet, "/tasks?completed=x", nil)
 		assertStatus(t, response.Code, http.StatusBadRequest)
 	})
+
+	t.Run("get unauthorized status when sending bad token", func(t *testing.T) {
+		request, _ = http.NewRequest(http.MethodGet, "/tasks", nil)
+
+		request.Header.Add("authorization", "wrongToken")
+		response = httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusUnauthorized)
+	})
 }
 
 func taskRedirect(t testing.TB) {
@@ -236,6 +250,7 @@ func updateRequestAndResponse(t testing.TB, server *TaskServer, method, url stri
 		t.Errorf("request failed, %v", err)
 	}
 
+	request.Header.Add("authorization", bearerToken)
 	response = httptest.NewRecorder()
 
 	server.ServeHTTP(response, request)

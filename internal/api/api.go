@@ -5,6 +5,7 @@ import (
 	"example/challenges/internal/repository"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -37,6 +38,10 @@ func NewTaskServer() (*TaskServer, error) {
 
 func (t *TaskServer) tasksHandler(w http.ResponseWriter, r *http.Request) {
 
+	if auth := checkAuthorization(w, r); !auth {
+		return
+	}
+
 	switch r.Method {
 	case http.MethodPost:
 		processRequestBodyTask(t, w, r, -1, createTask)
@@ -45,31 +50,38 @@ func (t *TaskServer) tasksHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 	}
+
 }
 
 func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
+
+	if auth := checkAuthorization(w, r); !auth {
+		return
+	}
+
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 
 	if idStr == "" {
 		retrieveTasks(t, w, r)
-	} else {
-		id, err := strconv.Atoi(idStr)
-
-		if err != nil {
-			errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to get id, %v", err))
-		} else {
-
-			switch r.Method {
-			case http.MethodPut:
-				processRequestBodyTask(t, w, r, int64(id), updateTask)
-			case http.MethodGet:
-				retrieveTaskByID(t, w, int64(id))
-			default:
-				w.WriteHeader(http.StatusBadRequest)
-			}
-
-		}
+		return
 	}
+
+	id, err := strconv.Atoi(idStr)
+
+	if err != nil {
+		errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to get id, %v", err))
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPut:
+		processRequestBodyTask(t, w, r, int64(id), updateTask)
+	case http.MethodGet:
+		retrieveTaskByID(t, w, int64(id))
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
 }
 
 func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
@@ -78,16 +90,18 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 	if filter == "" {
 		tasks, err := t.crud.RetrieveAll()
 		sendTasks(w, tasks, err)
-	} else {
-		completed, err := strconv.ParseBool(filter)
-
-		if err != nil {
-			errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to filter param, %v", err))
-		} else {
-			tasks, err := t.crud.Filter(completed)
-			sendTasks(w, tasks, err)
-		}
+		return
 	}
+
+	completed, err := strconv.ParseBool(filter)
+
+	if err != nil {
+		errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to filter param, %v", err))
+	} else {
+		tasks, err := t.crud.Filter(completed)
+		sendTasks(w, tasks, err)
+	}
+
 }
 
 func createTask(t *TaskServer, w http.ResponseWriter, task repository.Task) {
@@ -131,36 +145,53 @@ func processRequestBodyTask(t *TaskServer, w http.ResponseWriter, r *http.Reques
 
 	if r.Body == nil {
 		errorHandler(w, http.StatusBadRequest, "can't process an empty task, body is nil")
-	} else {
-		err := json.NewDecoder(r.Body).Decode(&task)
-
-		if err != nil {
-			errorHandler(w, http.StatusInternalServerError,
-				fmt.Sprintf("failed to decode request body to json, %v", err))
-		} else if task.Name == "" {
-			errorHandler(w, http.StatusBadRequest, "can't process a nameless task")
-		} else {
-			if id > 0 {
-				task.ID = id
-			}
-			processTask(t, w, task)
-		}
+		return
 	}
+
+	err := json.NewDecoder(r.Body).Decode(&task)
+
+	if err != nil {
+		errorHandler(w, http.StatusInternalServerError,
+			fmt.Sprintf("failed to decode request body to json, %v", err))
+	} else if task.Name == "" {
+		errorHandler(w, http.StatusBadRequest, "can't process a nameless task")
+	} else {
+		if id > 0 {
+			task.ID = id
+		}
+		processTask(t, w, task)
+	}
+
 }
 
 func sendTasks(w http.ResponseWriter, respBody interface{}, err error) {
 	if err != nil {
 		errorHandler(w, http.StatusInternalServerError,
 			fmt.Sprintf("failed to query database, %v", err))
-	} else {
-		w.Header().Set("content-type", jsonContentType)
-		err := json.NewEncoder(w).Encode(respBody)
-
-		if err != nil {
-			errorHandler(w, http.StatusInternalServerError,
-				fmt.Sprintf("failed to encode response body to json, %v", err))
-		}
+		return
 	}
+
+	w.Header().Set("content-type", jsonContentType)
+	encodeErr := json.NewEncoder(w).Encode(respBody)
+
+	if encodeErr != nil {
+		errorHandler(w, http.StatusInternalServerError,
+			fmt.Sprintf("failed to encode response body to json, %v", encodeErr))
+	}
+
+}
+
+func checkAuthorization(w http.ResponseWriter, r *http.Request) bool {
+
+	token := os.Getenv("API_TOKEN")
+	requestToken := r.Header.Get("authorization")
+
+	if token != requestToken {
+		errorHandler(w, http.StatusUnauthorized, "Unauthorized")
+		return false
+	}
+
+	return true
 }
 
 func errorHandler(w http.ResponseWriter, status int, msg string) {
