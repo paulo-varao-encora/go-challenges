@@ -13,14 +13,14 @@ type TaskOrm struct {
 	DBConn *gorm.DB
 }
 
-func NewTaskOrm() (*TaskOrm, error) {
-	dbConn, err := NewConnection()
+func NewTaskOrm() (TaskOrm, error) {
+	DBConn, err := NewConnection()
 
 	if err != nil {
-		return nil, fmt.Errorf("connecting to database failed, %v", err)
+		return TaskOrm{}, fmt.Errorf("connecting to database failed, %v", err)
 	}
 
-	return &TaskOrm{DBConn: dbConn}, nil
+	return TaskOrm{DBConn}, nil
 }
 
 func (o *TaskOrm) RetrieveAll() ([]internal.Task, error) {
@@ -67,10 +67,16 @@ func (o *TaskOrm) Delete(id int64) (int64, error) {
 }
 
 func (o *TaskOrm) Update(task internal.Task) (int64, error) {
+	_, err := o.FindByID(task.ID)
+
+	if err != nil {
+		return 0, err
+	}
+
 	result := o.DBConn.Save(&task)
 
 	if result.Error != nil {
-		return 0, fmt.Errorf("failed to update task, %v", result.Error)
+		return 0, result.Error
 	}
 
 	return result.RowsAffected, nil

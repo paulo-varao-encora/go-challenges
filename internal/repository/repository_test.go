@@ -18,7 +18,7 @@ func TestRepository(t *testing.T) {
 		t.Errorf("failed to create new task crud, %v", err)
 	}
 
-	internal.TestCRUD(t, crud)
+	internal.TestCRUD(t, &crud)
 }
 
 func TestDBConnection(t *testing.T) {

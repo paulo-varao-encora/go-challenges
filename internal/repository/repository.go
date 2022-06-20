@@ -13,14 +13,14 @@ type TaskCrud struct {
 	DBConn *sql.DB
 }
 
-func NewTaskCrud() (*TaskCrud, error) {
-	dbConn, err := NewConnection()
+func NewTaskCrud() (TaskCrud, error) {
+	DBConn, err := NewConnection()
 
 	if err != nil {
-		return nil, fmt.Errorf("connecting to database failed, %v", err)
+		return TaskCrud{}, fmt.Errorf("connecting to database failed, %v", err)
 	}
 
-	return &TaskCrud{DBConn: dbConn}, nil
+	return TaskCrud{DBConn}, nil
 }
 
 func (c *TaskCrud) RetrieveAll() ([]internal.Task, error) {

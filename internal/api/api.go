@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"example/challenges/internal"
+	"example/challenges/internal/orm"
 	"example/challenges/internal/repository"
 	"fmt"
 	"net/http"
@@ -14,19 +15,32 @@ import (
 const jsonContentType = "application/json"
 
 type TaskServer struct {
-	crud *repository.TaskCrud
+	table internal.TaskTable
 	http.Handler
 }
 
 func NewTaskServer() (*TaskServer, error) {
 	server := new(TaskServer)
-	crud, err := repository.NewTaskCrud()
+
+	dbImpl := os.Getenv("DB_IMPL")
+	var table internal.TaskTable
+	var err error
+
+	if dbImpl == "orm" {
+		rep, repErr := orm.NewTaskOrm()
+		table = &rep
+		err = repErr
+	} else {
+		rep, repErr := repository.NewTaskCrud()
+		table = &rep
+		err = repErr
+	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	server.crud = crud
+	server.table = table
 
 	router := http.NewServeMux()
 	router.Handle("/tasks", http.HandlerFunc(server.tasksHandler))
@@ -89,7 +103,7 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 	filter := r.URL.Query().Get("completed")
 
 	if filter == "" {
-		tasks, err := t.crud.RetrieveAll()
+		tasks, err := t.table.RetrieveAll()
 		sendTasks(w, tasks, err)
 		return
 	}
@@ -99,14 +113,14 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to filter param, %v", err))
 	} else {
-		tasks, err := t.crud.Filter(completed)
+		tasks, err := t.table.Filter(completed)
 		sendTasks(w, tasks, err)
 	}
 
 }
 
 func createTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
-	id, err := t.crud.Create(task)
+	id, err := t.table.Create(task)
 
 	if err != nil {
 		errorHandler(w, http.StatusInternalServerError,
@@ -117,9 +131,10 @@ func createTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
 }
 
 func retrieveTaskByID(t *TaskServer, w http.ResponseWriter, id int64) {
-	task, err := t.crud.FindByID(id)
+	task, err := t.table.FindByID(id)
 
-	if err != nil && strings.Contains(err.Error(), "sql: no rows in result set") {
+	if err != nil && (strings.Contains(err.Error(), "sql: no rows in result set") ||
+		strings.Contains(err.Error(), "record not found")) {
 		errorHandler(w, http.StatusBadRequest, "invalid task id")
 	} else {
 		sendTasks(w, task, err)
@@ -127,9 +142,9 @@ func retrieveTaskByID(t *TaskServer, w http.ResponseWriter, id int64) {
 }
 
 func updateTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
-	rows, err := t.crud.Update(task)
+	rows, err := t.table.Update(task)
 
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "record not found") {
 		errorHandler(w, http.StatusInternalServerError,
 			fmt.Sprintf("failed to update task %v in database, %v", task.ID, err))
 	} else if rows < 1 {

@@ -13,7 +13,7 @@ func TestOrm(t *testing.T) {
 		t.Errorf("failed to create new task orm, %v", err)
 	}
 
-	internal.TestCRUD(t, orm)
+	internal.TestCRUD(t, &orm)
 }
 
 func TestDBConnection(t *testing.T) {
