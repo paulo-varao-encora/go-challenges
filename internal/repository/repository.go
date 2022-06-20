@@ -2,17 +2,12 @@ package repository
 
 import (
 	"database/sql"
+	"example/challenges/internal"
 	"fmt"
 	"os"
 
 	"github.com/go-sql-driver/mysql"
 )
-
-type Task struct {
-	ID        int64
-	Name      string
-	Completed bool
-}
 
 type TaskCrud struct {
 	DBConn *sql.DB
@@ -28,7 +23,7 @@ func NewTaskCrud() (*TaskCrud, error) {
 	return &TaskCrud{DBConn: dbConn}, nil
 }
 
-func (c *TaskCrud) RetrieveAll() ([]Task, error) {
+func (c *TaskCrud) RetrieveAll() ([]internal.Task, error) {
 
 	rows, err := c.DBConn.Query("SELECT * FROM tasks")
 
@@ -40,11 +35,11 @@ func (c *TaskCrud) RetrieveAll() ([]Task, error) {
 	return getTasksFromRows(rows)
 }
 
-func (c *TaskCrud) FindByID(id int64) (Task, error) {
+func (c *TaskCrud) FindByID(id int64) (internal.Task, error) {
 
 	row := c.DBConn.QueryRow("SELECT * FROM tasks WHERE ID = ?", id)
 
-	var task Task
+	var task internal.Task
 
 	if err := row.Scan(&task.ID, &task.Name, &task.Completed); err != nil {
 		return task, fmt.Errorf("failed to convert row into task, %v", err)
@@ -53,7 +48,7 @@ func (c *TaskCrud) FindByID(id int64) (Task, error) {
 	return task, nil
 }
 
-func (c *TaskCrud) Create(t Task) (int64, error) {
+func (c *TaskCrud) Create(t internal.Task) (int64, error) {
 
 	result, err := c.DBConn.Exec("INSERT INTO tasks (Name, Completed) VALUES (?, ?)",
 		t.Name, t.Completed)
@@ -81,7 +76,7 @@ func (c *TaskCrud) Delete(id int64) (int64, error) {
 	return result.RowsAffected()
 }
 
-func (c *TaskCrud) Update(task Task) (int64, error) {
+func (c *TaskCrud) Update(task internal.Task) (int64, error) {
 	result, err := c.DBConn.Exec("UPDATE tasks SET Name=?, Completed=? WHERE ID = ?",
 		task.Name, task.Completed, task.ID)
 
@@ -92,7 +87,7 @@ func (c *TaskCrud) Update(task Task) (int64, error) {
 	return result.RowsAffected()
 }
 
-func (c *TaskCrud) Filter(completed bool) ([]Task, error) {
+func (c *TaskCrud) Filter(completed bool) ([]internal.Task, error) {
 	rows, err := c.DBConn.Query("SELECT * FROM tasks WHERE Completed = ?", completed)
 
 	if err != nil {
@@ -117,11 +112,11 @@ func NewConnection() (*sql.DB, error) {
 	return sql.Open("mysql", cfg.FormatDSN())
 }
 
-func getTasksFromRows(rows *sql.Rows) ([]Task, error) {
-	var tasks []Task
+func getTasksFromRows(rows *sql.Rows) ([]internal.Task, error) {
+	var tasks []internal.Task
 
 	for rows.Next() {
-		var t Task
+		var t internal.Task
 
 		if err := rows.Scan(&t.ID, &t.Name, &t.Completed); err != nil {
 			return nil, fmt.Errorf("failed to convert row into task, %v", err)

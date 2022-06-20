@@ -1,6 +1,7 @@
 package main
 
 import (
+	"example/challenges/internal"
 	"example/challenges/internal/repository"
 	"fmt"
 )
@@ -8,7 +9,7 @@ import (
 func main() {
 	crud, _ := repository.NewTaskCrud()
 
-	task := repository.Task{Name: "Sample task", Completed: false}
+	task := internal.Task{Name: "Sample task", Completed: false}
 
 	// Create
 	id, _ := crud.Create(task)

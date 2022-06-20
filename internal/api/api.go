@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"example/challenges/internal"
 	"example/challenges/internal/repository"
 	"fmt"
 	"net/http"
@@ -104,7 +105,7 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 
 }
 
-func createTask(t *TaskServer, w http.ResponseWriter, task repository.Task) {
+func createTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
 	id, err := t.crud.Create(task)
 
 	if err != nil {
@@ -125,7 +126,7 @@ func retrieveTaskByID(t *TaskServer, w http.ResponseWriter, id int64) {
 	}
 }
 
-func updateTask(t *TaskServer, w http.ResponseWriter, task repository.Task) {
+func updateTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
 	rows, err := t.crud.Update(task)
 
 	if err != nil {
@@ -140,8 +141,8 @@ func updateTask(t *TaskServer, w http.ResponseWriter, task repository.Task) {
 }
 
 func processRequestBodyTask(t *TaskServer, w http.ResponseWriter, r *http.Request, id int64,
-	processTask func(t *TaskServer, w http.ResponseWriter, task repository.Task)) {
-	var task repository.Task
+	processTask func(t *TaskServer, w http.ResponseWriter, task internal.Task)) {
+	var task internal.Task
 
 	if r.Body == nil {
 		errorHandler(w, http.StatusBadRequest, "can't process an empty task, body is nil")

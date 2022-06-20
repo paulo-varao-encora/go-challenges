@@ -8,7 +8,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"example/challenges/internal/repository"
+	"example/challenges/internal"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,13 +17,6 @@ import (
 	"strconv"
 	"testing"
 )
-
-var defaultTasks = []repository.Task{
-	{ID: 1, Name: "Pay bills", Completed: true},
-	{ID: 2, Name: "Walk the dog", Completed: false},
-	{ID: 3, Name: "Buy groceries", Completed: false},
-	{ID: 4, Name: "Exercise", Completed: true},
-}
 
 var bearerToken = os.Getenv("API_TOKEN")
 
@@ -44,7 +37,7 @@ func TestCrudServer(t *testing.T) {
 		assertContentType(t, response, jsonContentType)
 
 		got := getTasksFromResponse(t, response.Body)
-		assertTasks(t, got, defaultTasks)
+		assertTasks(t, got, internal.DefaultTasks)
 	})
 
 	t.Run("create a new task and returns its ID", func(t *testing.T) {
@@ -70,14 +63,14 @@ func TestCrudServer(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusOK)
 		assertContentType(t, response, jsonContentType)
 
-		task := repository.Task{}
+		task := internal.Task{}
 		err := json.Unmarshal(response.Body.Bytes(), &task)
 
 		if err != nil {
 			t.Errorf("converting response body to task failed, %v", err)
 		}
 
-		assertSingleTask(t, task, defaultTasks[0])
+		assertSingleTask(t, task, internal.DefaultTasks[0])
 	})
 
 	t.Run("redirect to /tasks case id is empty", func(t *testing.T) {
@@ -177,7 +170,7 @@ func taskRedirect(t testing.TB) {
 
 func newTask(t testing.TB, name string, completed bool) *bytes.Buffer {
 	t.Helper()
-	newTask := repository.Task{Name: name, Completed: completed}
+	newTask := internal.Task{Name: name, Completed: completed}
 	body, err := json.Marshal(newTask)
 
 	if err != nil {
@@ -187,7 +180,7 @@ func newTask(t testing.TB, name string, completed bool) *bytes.Buffer {
 	return bytes.NewBuffer(body)
 }
 
-func getTasksFromResponse(t testing.TB, body io.Reader) (tasks []repository.Task) {
+func getTasksFromResponse(t testing.TB, body io.Reader) (tasks []internal.Task) {
 	t.Helper()
 	err := json.NewDecoder(body).Decode(&tasks)
 
@@ -213,7 +206,7 @@ func assertContentType(t testing.TB, response *httptest.ResponseRecorder, want s
 	}
 }
 
-func assertTasks(t testing.TB, got, want []repository.Task) {
+func assertTasks(t testing.TB, got, want []internal.Task) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v want %v", got, want)
@@ -233,7 +226,7 @@ func assertNewID(t testing.TB, got string) {
 	}
 }
 
-func assertSingleTask(t testing.TB, got, want repository.Task) {
+func assertSingleTask(t testing.TB, got, want internal.Task) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %v want %v", got, want)

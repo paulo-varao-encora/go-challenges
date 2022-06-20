@@ -1,12 +1,92 @@
 package orm
 
 import (
+	"example/challenges/internal"
 	"fmt"
 	"os"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
+type TaskOrm struct {
+	DBConn *gorm.DB
+}
+
+func NewTaskOrm() (*TaskOrm, error) {
+	dbConn, err := NewConnection()
+
+	if err != nil {
+		return nil, fmt.Errorf("connecting to database failed, %v", err)
+	}
+
+	return &TaskOrm{DBConn: dbConn}, nil
+}
+
+func (o *TaskOrm) RetrieveAll() ([]internal.Task, error) {
+
+	var tasks []internal.Task
+	result := o.DBConn.Find(&tasks)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to list all tasks, %v", result.Error)
+	}
+
+	return tasks, nil
+}
+
+func (o *TaskOrm) FindByID(id int64) (internal.Task, error) {
+	var task internal.Task
+	result := o.DBConn.First(&task, id)
+
+	if result.Error != nil {
+		return task, fmt.Errorf("failed to find task by its id, %v", result.Error)
+	}
+
+	return task, nil
+}
+
+func (o *TaskOrm) Create(task internal.Task) (int64, error) {
+	result := o.DBConn.Create(&task)
+
+	if result.Error != nil {
+		return 0, fmt.Errorf("failed to create task, %v", result.Error)
+	}
+
+	return task.ID, nil
+}
+
+func (o *TaskOrm) Delete(id int64) (int64, error) {
+	result := o.DBConn.Delete(&internal.Task{}, id)
+
+	if result.Error != nil {
+		return 0, fmt.Errorf("failed to delete task, %v", result.Error)
+	}
+
+	return result.RowsAffected, nil
+}
+
+func (o *TaskOrm) Update(task internal.Task) (int64, error) {
+	result := o.DBConn.Save(&task)
+
+	if result.Error != nil {
+		return 0, fmt.Errorf("failed to update task, %v", result.Error)
+	}
+
+	return result.RowsAffected, nil
+}
+
+func (o *TaskOrm) Filter(completed bool) ([]internal.Task, error) {
+	var tasks []internal.Task
+
+	result := o.DBConn.Where("Completed = ?", completed).Find(&tasks)
+
+	if result.Error != nil {
+		return tasks, fmt.Errorf("failed to filter tasks, %v", result.Error)
+	}
+
+	return tasks, nil
+}
 
 func NewConnection() (*gorm.DB, error) {
 	user := os.Getenv("DB_USER")

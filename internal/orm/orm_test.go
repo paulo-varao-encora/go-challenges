@@ -1,6 +1,20 @@
 package orm
 
-import "testing"
+import (
+	"example/challenges/internal"
+	"testing"
+)
+
+func TestOrm(t *testing.T) {
+
+	orm, err := NewTaskOrm()
+
+	if err != nil {
+		t.Errorf("failed to create new task orm, %v", err)
+	}
+
+	internal.TestCRUD(t, orm)
+}
 
 func TestDBConnection(t *testing.T) {
 
