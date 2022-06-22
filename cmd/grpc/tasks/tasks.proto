@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option go_package = "cmd/grpc/tasks";
+
+package tasks;
+
+service TasksGrpc {
+    rpc RetrieveAll(Empty) returns (TaskList) {}
+    rpc FilterTasks(FilterRequest) returns (TaskList) {}
+    rpc RetrieveTaskByID(TaskID) returns (ExistingTask) {}
+    rpc Create(NewTask) returns (TaskID) {}
+    rpc Update(ExistingTask) returns (Empty) {}
+}
+
+message Empty {}
+
+message ExistingTask {
+    int64 ID = 1;
+    string Name = 2;
+    bool Completed = 3;
+}
+
+message NewTask {
+    string Name = 1;
+    bool Completed = 2;
+}
+
+message FilterRequest {
+    bool completed = 1;
+}
+
+message TaskList {
+    repeated ExistingTask tasks = 1;
+}
+
+message TaskID {
+    int64 id = 1;
+}
