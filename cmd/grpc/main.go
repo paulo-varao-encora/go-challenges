@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -40,6 +41,45 @@ func (s *server) FilterTasks(ctx context.Context, in *pb.FilterRequest) (*pb.Tas
 	}
 
 	return getProtoTaskList(tasks), nil
+}
+
+func (s *server) RetrieveTaskByID(ctx context.Context, in *pb.TaskID) (*pb.ExistingTask, error) {
+	id := in.GetId()
+	t, err := s.table.FindByID(id)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "record not found") {
+			return nil, status.Newf(codes.InvalidArgument, err.Error()).Err()
+		}
+		return nil, status.Newf(codes.Internal, err.Error()).Err()
+	}
+
+	return &pb.ExistingTask{ID: t.ID, Name: t.Name, Completed: t.Completed}, nil
+}
+
+func (s *server) Create(ctx context.Context, in *pb.NewTask) (*pb.TaskID, error) {
+	task := internal.Task{Name: in.GetName(), Completed: in.GetCompleted()}
+	id, err := s.table.Create(task)
+
+	if err != nil {
+		return nil, status.Newf(codes.Internal, err.Error()).Err()
+	}
+
+	return &pb.TaskID{Id: id}, nil
+}
+
+func (s *server) Update(ctx context.Context, in *pb.ExistingTask) (*pb.Empty, error) {
+	task := internal.Task{ID: in.GetID(), Name: in.GetName(), Completed: in.GetCompleted()}
+	_, err := s.table.Update(task)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "record not found") {
+			return nil, status.Newf(codes.InvalidArgument, err.Error()).Err()
+		}
+		return nil, status.Newf(codes.Internal, err.Error()).Err()
+	}
+
+	return &pb.Empty{}, nil
 }
 
 func main() {
