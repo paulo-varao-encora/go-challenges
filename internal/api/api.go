@@ -3,8 +3,7 @@ package api
 import (
 	"encoding/json"
 	"example/challenges/internal"
-	"example/challenges/internal/orm"
-	"example/challenges/internal/repository"
+	"example/challenges/internal/mux"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,19 +21,7 @@ type TaskServer struct {
 func NewTaskServer() (*TaskServer, error) {
 	server := new(TaskServer)
 
-	dbImpl := os.Getenv("DB_IMPL")
-	var table internal.TaskTable
-	var err error
-
-	if dbImpl == "orm" {
-		rep, repErr := orm.NewTaskOrm()
-		table = &rep
-		err = repErr
-	} else {
-		rep, repErr := repository.NewTaskCrud()
-		table = &rep
-		err = repErr
-	}
+	table, err := mux.SelectDBImpl()
 
 	if err != nil {
 		return nil, err

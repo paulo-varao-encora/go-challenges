@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "example/challenges/cmd/grpc/tasks"
 	"example/challenges/internal"
-	"example/challenges/internal/orm"
-	"example/challenges/internal/repository"
+	"example/challenges/internal/mux"
 )
 
 type server struct {
@@ -22,28 +22,24 @@ type server struct {
 }
 
 func (s *server) RetrieveAll(ctx context.Context, in *pb.Empty) (*pb.TaskList, error) {
-	tasks, _ := s.table.RetrieveAll()
+	tasks, err := s.table.RetrieveAll()
 
-	result := []*pb.ExistingTask{}
-
-	for _, t := range tasks {
-		result = append(result, &pb.ExistingTask{ID: t.ID, Name: t.Name, Completed: t.Completed})
+	if err != nil {
+		return nil, status.Newf(codes.Internal, err.Error()).Err()
 	}
 
-	return &pb.TaskList{Tasks: result}, nil
+	return getProtoTaskList(tasks), nil
 }
 
 func (s *server) FilterTasks(ctx context.Context, in *pb.FilterRequest) (*pb.TaskList, error) {
 	completed := in.GetCompleted()
-	tasks, _ := s.table.Filter(completed)
+	tasks, err := s.table.Filter(completed)
 
-	result := []*pb.ExistingTask{}
-
-	for _, t := range tasks {
-		result = append(result, &pb.ExistingTask{ID: t.ID, Name: t.Name, Completed: t.Completed})
+	if err != nil {
+		return nil, status.Newf(codes.Internal, err.Error()).Err()
 	}
 
-	return &pb.TaskList{Tasks: result}, nil
+	return getProtoTaskList(tasks), nil
 }
 
 func main() {
@@ -54,8 +50,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	srv, err := newTableServer()
+	if err != nil {
+		log.Fatalf("failed to create server: %v", err)
+	}
+
 	s := grpc.NewServer()
-	srv := newCrudServer()
 	pb.RegisterTasksGrpcServer(s, srv)
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
@@ -63,24 +63,22 @@ func main() {
 	}
 }
 
-func newCrudServer() *server {
-	dbImpl := os.Getenv("DB_IMPL")
-	var table internal.TaskTable
-	var err error
+func getProtoTaskList(tasks []internal.Task) *pb.TaskList {
+	result := []*pb.ExistingTask{}
 
-	if dbImpl == "orm" {
-		rep, repErr := orm.NewTaskOrm()
-		table = &rep
-		err = repErr
-	} else {
-		rep, repErr := repository.NewTaskCrud()
-		table = &rep
-		err = repErr
+	for _, t := range tasks {
+		result = append(result, &pb.ExistingTask{ID: t.ID, Name: t.Name, Completed: t.Completed})
 	}
+
+	return &pb.TaskList{Tasks: result}
+}
+
+func newTableServer() (*server, error) {
+	table, err := mux.SelectDBImpl()
 
 	if err != nil {
-		log.Fatalf("failed to update table: %v", err)
+		return nil, err
 	}
 	srv := server{table: table}
-	return &srv
+	return &srv, nil
 }
