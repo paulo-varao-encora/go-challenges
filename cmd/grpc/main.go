@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "example/challenges/cmd/grpc/tasks"
 	"example/challenges/internal"
 	"example/challenges/internal/mux"
+	pb "example/challenges/internal/proto/tasks"
 )
 
 type server struct {

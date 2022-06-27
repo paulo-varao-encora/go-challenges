@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "cmd/grpc/tasks";
+option go_package = "example/challenges";
 
 package tasks;
 
