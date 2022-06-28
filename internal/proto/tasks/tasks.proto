@@ -2,14 +2,42 @@ syntax = "proto3";
 
 option go_package = "example/challenges";
 
+import "google/api/annotations.proto";
+
 package tasks;
 
 service TasksGrpc {
-    rpc RetrieveAll(Empty) returns (TaskList) {}
-    rpc FilterTasks(FilterRequest) returns (TaskList) {}
-    rpc RetrieveTaskByID(TaskID) returns (ExistingTask) {}
-    rpc Create(NewTask) returns (TaskID) {}
-    rpc Update(ExistingTask) returns (Empty) {}
+    rpc RetrieveAll(Empty) returns (TaskList) {
+        option (google.api.http) = {
+            get: "/v1/tasks"
+        };
+    }
+    
+    rpc FilterTasks(FilterRequest) returns (TaskList) {
+        option (google.api.http) = {
+            get: "/v1/tasks/completed/{completed}";
+        };
+    }
+    
+    rpc RetrieveTaskByID(TaskID) returns (ExistingTask) {
+        option (google.api.http) = {
+            get: "/v1/tasks/{id}";
+        };
+    }
+    
+    rpc Create(CreateTaskRequest) returns (TaskID) {
+        option (google.api.http) = {
+            post: "/v1/tasks"
+            body: "task"
+        };
+    }
+    
+    rpc Update(UpdateTaskRequest) returns (Empty) {
+        option (google.api.http) = {
+            put: "/v1/tasks/{task.ID}"
+            body: "task"
+        };
+    }
 }
 
 message Empty {}
@@ -35,4 +63,12 @@ message TaskList {
 
 message TaskID {
     int64 id = 1;
+}
+
+message CreateTaskRequest {
+    NewTask task = 1;
+}
+
+message UpdateTaskRequest {
+    ExistingTask task = 1;
 }

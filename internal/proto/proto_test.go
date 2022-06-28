@@ -46,8 +46,9 @@ func TestGrpcServer(t *testing.T) {
 
 	t.Run("create a new task and returns its ID", func(t *testing.T) {
 		newTask := pb.NewTask{Name: "Sample task", Completed: true}
+		createRequest := pb.CreateTaskRequest{Task: &newTask}
 
-		r, err := c.Create(ctx, &newTask)
+		r, err := c.Create(ctx, &createRequest)
 		if err != nil {
 			t.Errorf("failed to create task: %v", err)
 		}
@@ -78,7 +79,8 @@ func TestGrpcServer(t *testing.T) {
 	t.Run("update single task by its id", func(t *testing.T) {
 		id := int64(5)
 		existingTask := pb.ExistingTask{ID: id, Name: "Sample task updated", Completed: false}
-		_, err := c.Update(ctx, &existingTask)
+		updateRequest := pb.UpdateTaskRequest{Task: &existingTask}
+		_, err := c.Update(ctx, &updateRequest)
 
 		if err != nil {
 			t.Errorf("failed to update task %v: %v", id, err)

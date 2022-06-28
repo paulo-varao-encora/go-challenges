@@ -75,8 +75,8 @@ func (s *TasksGrpcServer) RetrieveTaskByID(ctx context.Context, in *pb.TaskID) (
 	return &pb.ExistingTask{ID: t.ID, Name: t.Name, Completed: t.Completed}, nil
 }
 
-func (s *TasksGrpcServer) Create(ctx context.Context, in *pb.NewTask) (*pb.TaskID, error) {
-	task := internal.Task{Name: in.GetName(), Completed: in.GetCompleted()}
+func (s *TasksGrpcServer) Create(ctx context.Context, in *pb.CreateTaskRequest) (*pb.TaskID, error) {
+	task := internal.Task{Name: in.GetTask().GetName(), Completed: in.GetTask().GetCompleted()}
 	id, err := s.table.Create(task)
 
 	if err != nil {
@@ -86,8 +86,9 @@ func (s *TasksGrpcServer) Create(ctx context.Context, in *pb.NewTask) (*pb.TaskI
 	return &pb.TaskID{Id: id}, nil
 }
 
-func (s *TasksGrpcServer) Update(ctx context.Context, in *pb.ExistingTask) (*pb.Empty, error) {
-	task := internal.Task{ID: in.GetID(), Name: in.GetName(), Completed: in.GetCompleted()}
+func (s *TasksGrpcServer) Update(ctx context.Context, in *pb.UpdateTaskRequest) (*pb.Empty, error) {
+	t := in.GetTask()
+	task := internal.Task{ID: t.GetID(), Name: t.GetName(), Completed: t.GetCompleted()}
 	_, err := s.table.Update(task)
 
 	if err != nil {

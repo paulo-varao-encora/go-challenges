@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.6.1
-// source: cmd/grpc/tasks/tasks.proto
+// source: tasks/tasks.proto
 
-package tasks
+package challenges
 
 import (
 	context "context"
@@ -25,8 +25,8 @@ type TasksGrpcClient interface {
 	RetrieveAll(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TaskList, error)
 	FilterTasks(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*TaskList, error)
 	RetrieveTaskByID(ctx context.Context, in *TaskID, opts ...grpc.CallOption) (*ExistingTask, error)
-	Create(ctx context.Context, in *NewTask, opts ...grpc.CallOption) (*TaskID, error)
-	Update(ctx context.Context, in *ExistingTask, opts ...grpc.CallOption) (*Empty, error)
+	Create(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*TaskID, error)
+	Update(ctx context.Context, in *UpdateTaskRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type tasksGrpcClient struct {
@@ -64,7 +64,7 @@ func (c *tasksGrpcClient) RetrieveTaskByID(ctx context.Context, in *TaskID, opts
 	return out, nil
 }
 
-func (c *tasksGrpcClient) Create(ctx context.Context, in *NewTask, opts ...grpc.CallOption) (*TaskID, error) {
+func (c *tasksGrpcClient) Create(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*TaskID, error) {
 	out := new(TaskID)
 	err := c.cc.Invoke(ctx, "/tasks.TasksGrpc/Create", in, out, opts...)
 	if err != nil {
@@ -73,7 +73,7 @@ func (c *tasksGrpcClient) Create(ctx context.Context, in *NewTask, opts ...grpc.
 	return out, nil
 }
 
-func (c *tasksGrpcClient) Update(ctx context.Context, in *ExistingTask, opts ...grpc.CallOption) (*Empty, error) {
+func (c *tasksGrpcClient) Update(ctx context.Context, in *UpdateTaskRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/tasks.TasksGrpc/Update", in, out, opts...)
 	if err != nil {
@@ -89,8 +89,8 @@ type TasksGrpcServer interface {
 	RetrieveAll(context.Context, *Empty) (*TaskList, error)
 	FilterTasks(context.Context, *FilterRequest) (*TaskList, error)
 	RetrieveTaskByID(context.Context, *TaskID) (*ExistingTask, error)
-	Create(context.Context, *NewTask) (*TaskID, error)
-	Update(context.Context, *ExistingTask) (*Empty, error)
+	Create(context.Context, *CreateTaskRequest) (*TaskID, error)
+	Update(context.Context, *UpdateTaskRequest) (*Empty, error)
 	mustEmbedUnimplementedTasksGrpcServer()
 }
 
@@ -107,10 +107,10 @@ func (UnimplementedTasksGrpcServer) FilterTasks(context.Context, *FilterRequest)
 func (UnimplementedTasksGrpcServer) RetrieveTaskByID(context.Context, *TaskID) (*ExistingTask, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RetrieveTaskByID not implemented")
 }
-func (UnimplementedTasksGrpcServer) Create(context.Context, *NewTask) (*TaskID, error) {
+func (UnimplementedTasksGrpcServer) Create(context.Context, *CreateTaskRequest) (*TaskID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (UnimplementedTasksGrpcServer) Update(context.Context, *ExistingTask) (*Empty, error) {
+func (UnimplementedTasksGrpcServer) Update(context.Context, *UpdateTaskRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedTasksGrpcServer) mustEmbedUnimplementedTasksGrpcServer() {}
@@ -181,7 +181,7 @@ func _TasksGrpc_RetrieveTaskByID_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _TasksGrpc_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NewTask)
+	in := new(CreateTaskRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -193,13 +193,13 @@ func _TasksGrpc_Create_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/tasks.TasksGrpc/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksGrpcServer).Create(ctx, req.(*NewTask))
+		return srv.(TasksGrpcServer).Create(ctx, req.(*CreateTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _TasksGrpc_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExistingTask)
+	in := new(UpdateTaskRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func _TasksGrpc_Update_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/tasks.TasksGrpc/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksGrpcServer).Update(ctx, req.(*ExistingTask))
+		return srv.(TasksGrpcServer).Update(ctx, req.(*UpdateTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -245,5 +245,5 @@ var TasksGrpc_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "cmd/grpc/tasks/tasks.proto",
+	Metadata: "tasks/tasks.proto",
 }
