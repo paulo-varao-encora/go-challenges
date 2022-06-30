@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 	port := flag.Int("port", 5001, "The server port")
 
-	s, lis, err := proto.NewTasksGrpcServer(fmt.Sprintf("localhost:%d", *port))
+	s, lis, err := proto.NewTaskServer(fmt.Sprintf("localhost:%d", *port))
 
 	if err != nil {
 		log.Fatalf("failed to build server: %v", err)
@@ -44,7 +44,7 @@ func main() {
 
 	gwmux := runtime.NewServeMux()
 
-	err = pb.RegisterTasksGrpcHandler(context.Background(), gwmux, conn)
+	err = pb.RegisterTaskManagerHandler(context.Background(), gwmux, conn)
 	if err != nil {
 		log.Fatalln("Failed to register gateway:", err)
 	}

@@ -7,16 +7,16 @@ import (
 )
 
 func main() {
-	crud, _ := repository.NewTaskCrud()
+	table, _ := repository.NewTaskTable()
 
 	task := internal.Task{Name: "Sample task", Completed: false}
 
 	// Create
-	id, _ := crud.Create(task)
+	id, _ := table.Create(task)
 	fmt.Printf("task id: %v\n", id)
 
 	// Retrieve
-	tasks, _ := crud.RetrieveAll()
+	tasks, _ := table.RetrieveAll()
 	total := len(tasks)
 	fmt.Printf("total tasks: %v\n", total)
 
@@ -25,10 +25,10 @@ func main() {
 	task.Name = "Simple task"
 	task.Completed = true
 
-	rowsAffected, _ := crud.Update(task)
+	rowsAffected, _ := table.Update(task)
 	fmt.Printf("updated tasks: %v\n", rowsAffected)
 
 	// Delete
-	rowsAffected, _ = crud.Delete(id)
+	rowsAffected, _ = table.Delete(id)
 	fmt.Printf("deleted tasks: %v\n", rowsAffected)
 }

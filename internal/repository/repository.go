@@ -9,23 +9,23 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-type TaskCrud struct {
-	DBConn *sql.DB
+type TaskTable struct {
+	db *sql.DB
 }
 
-func NewTaskCrud() (TaskCrud, error) {
-	DBConn, err := NewConnection()
+func NewTaskTable() (TaskTable, error) {
+	db, err := NewConnection()
 
 	if err != nil {
-		return TaskCrud{}, fmt.Errorf("connecting to database failed, %v", err)
+		return TaskTable{}, fmt.Errorf("connecting to database failed, %v", err)
 	}
 
-	return TaskCrud{DBConn}, nil
+	return TaskTable{db}, nil
 }
 
-func (c *TaskCrud) RetrieveAll() ([]internal.Task, error) {
+func (c *TaskTable) RetrieveAll() ([]internal.Task, error) {
 
-	rows, err := c.DBConn.Query("SELECT * FROM tasks")
+	rows, err := c.db.Query("SELECT * FROM tasks")
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list all tasks, %v", err)
@@ -35,9 +35,9 @@ func (c *TaskCrud) RetrieveAll() ([]internal.Task, error) {
 	return getTasksFromRows(rows)
 }
 
-func (c *TaskCrud) FindByID(id int64) (internal.Task, error) {
+func (c *TaskTable) FindByID(id int64) (internal.Task, error) {
 
-	row := c.DBConn.QueryRow("SELECT * FROM tasks WHERE ID = ?", id)
+	row := c.db.QueryRow("SELECT * FROM tasks WHERE ID = ?", id)
 
 	var task internal.Task
 
@@ -48,9 +48,9 @@ func (c *TaskCrud) FindByID(id int64) (internal.Task, error) {
 	return task, nil
 }
 
-func (c *TaskCrud) Create(t internal.Task) (int64, error) {
+func (c *TaskTable) Create(t internal.Task) (int64, error) {
 
-	result, err := c.DBConn.Exec("INSERT INTO tasks (Name, Completed) VALUES (?, ?)",
+	result, err := c.db.Exec("INSERT INTO tasks (Name, Completed) VALUES (?, ?)",
 		t.Name, t.Completed)
 
 	if err != nil {
@@ -66,8 +66,8 @@ func (c *TaskCrud) Create(t internal.Task) (int64, error) {
 	return id, nil
 }
 
-func (c *TaskCrud) Delete(id int64) (int64, error) {
-	result, err := c.DBConn.Exec("DELETE FROM tasks WHERE ID = ?", id)
+func (c *TaskTable) Delete(id int64) (int64, error) {
+	result, err := c.db.Exec("DELETE FROM tasks WHERE ID = ?", id)
 
 	if err != nil {
 		return 0, fmt.Errorf("failed to execute delete statement, %v", err)
@@ -76,8 +76,8 @@ func (c *TaskCrud) Delete(id int64) (int64, error) {
 	return result.RowsAffected()
 }
 
-func (c *TaskCrud) Update(task internal.Task) (int64, error) {
-	result, err := c.DBConn.Exec("UPDATE tasks SET Name=?, Completed=? WHERE ID = ?",
+func (c *TaskTable) Update(task internal.Task) (int64, error) {
+	result, err := c.db.Exec("UPDATE tasks SET Name=?, Completed=? WHERE ID = ?",
 		task.Name, task.Completed, task.ID)
 
 	if err != nil {
@@ -87,8 +87,8 @@ func (c *TaskCrud) Update(task internal.Task) (int64, error) {
 	return result.RowsAffected()
 }
 
-func (c *TaskCrud) Filter(completed bool) ([]internal.Task, error) {
-	rows, err := c.DBConn.Query("SELECT * FROM tasks WHERE Completed = ?", completed)
+func (c *TaskTable) Filter(completed bool) ([]internal.Task, error) {
+	rows, err := c.db.Query("SELECT * FROM tasks WHERE Completed = ?", completed)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter tasks, %v", err)

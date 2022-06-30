@@ -29,7 +29,7 @@ func TestGrpcServer(t *testing.T) {
 		t.Errorf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewTasksGrpcClient(conn)
+	c := pb.NewTaskManagerClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -124,7 +124,7 @@ func getInternalTaskList(protoTasks []*pb.ExistingTask) []internal.Task {
 
 func newServer(t testing.TB, address string) (*grpc.Server, net.Listener) {
 	t.Helper()
-	s, lis, err := NewTasksGrpcServer(address)
+	s, lis, err := NewTaskServer(address)
 
 	if err != nil {
 		t.Errorf("failed to build server: %v", err)

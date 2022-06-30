@@ -15,32 +15,32 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type TasksGrpcServer struct {
-	pb.UnimplementedTasksGrpcServer
+type TaskServer struct {
+	pb.UnimplementedTaskManagerServer
 	table internal.TaskTable
 }
 
-func NewTasksGrpcServer(address string) (*grpc.Server, net.Listener, error) {
+func NewTaskServer(address string) (*grpc.Server, net.Listener, error) {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to listen to %v, %v", address, err)
 	}
 
-	table, err := mux.SelectDBImpl()
+	table, err := mux.GetTable()
 
 	if err != nil {
 		return nil, lis, fmt.Errorf("failed to listen to select DB impl, %v", err)
 	}
 
-	srv := TasksGrpcServer{table: table}
+	srv := TaskServer{table: table}
 
 	s := grpc.NewServer()
-	pb.RegisterTasksGrpcServer(s, &srv)
+	pb.RegisterTaskManagerServer(s, &srv)
 
 	return s, lis, nil
 }
 
-func (s *TasksGrpcServer) RetrieveAll(ctx context.Context, in *pb.Empty) (*pb.TaskList, error) {
+func (s *TaskServer) RetrieveAll(ctx context.Context, in *pb.Empty) (*pb.TaskList, error) {
 	tasks, err := s.table.RetrieveAll()
 
 	if err != nil {
@@ -50,7 +50,7 @@ func (s *TasksGrpcServer) RetrieveAll(ctx context.Context, in *pb.Empty) (*pb.Ta
 	return getProtoTaskList(tasks), nil
 }
 
-func (s *TasksGrpcServer) FilterTasks(ctx context.Context, in *pb.FilterRequest) (*pb.TaskList, error) {
+func (s *TaskServer) FilterTasks(ctx context.Context, in *pb.FilterRequest) (*pb.TaskList, error) {
 	completed := in.GetCompleted()
 	tasks, err := s.table.Filter(completed)
 
@@ -61,7 +61,7 @@ func (s *TasksGrpcServer) FilterTasks(ctx context.Context, in *pb.FilterRequest)
 	return getProtoTaskList(tasks), nil
 }
 
-func (s *TasksGrpcServer) RetrieveTaskByID(ctx context.Context, in *pb.TaskID) (*pb.ExistingTask, error) {
+func (s *TaskServer) RetrieveTaskByID(ctx context.Context, in *pb.TaskID) (*pb.ExistingTask, error) {
 	id := in.GetId()
 	t, err := s.table.FindByID(id)
 
@@ -75,7 +75,7 @@ func (s *TasksGrpcServer) RetrieveTaskByID(ctx context.Context, in *pb.TaskID) (
 	return &pb.ExistingTask{ID: t.ID, Name: t.Name, Completed: t.Completed}, nil
 }
 
-func (s *TasksGrpcServer) Create(ctx context.Context, in *pb.CreateTaskRequest) (*pb.TaskID, error) {
+func (s *TaskServer) Create(ctx context.Context, in *pb.CreateTaskRequest) (*pb.TaskID, error) {
 	task := internal.Task{Name: in.GetTask().GetName(), Completed: in.GetTask().GetCompleted()}
 	id, err := s.table.Create(task)
 
@@ -86,7 +86,7 @@ func (s *TasksGrpcServer) Create(ctx context.Context, in *pb.CreateTaskRequest) 
 	return &pb.TaskID{Id: id}, nil
 }
 
-func (s *TasksGrpcServer) Update(ctx context.Context, in *pb.UpdateTaskRequest) (*pb.Empty, error) {
+func (s *TaskServer) Update(ctx context.Context, in *pb.UpdateTaskRequest) (*pb.Empty, error) {
 	t := in.GetTask()
 	task := internal.Task{ID: t.GetID(), Name: t.GetName(), Completed: t.GetCompleted()}
 	_, err := s.table.Update(task)

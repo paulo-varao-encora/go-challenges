@@ -7,24 +7,14 @@ import (
 	"os"
 )
 
-func SelectDBImpl() (internal.TaskTable, error) {
+func GetTable() (internal.TaskTable, error) {
 	dbImpl := os.Getenv("DB_IMPL")
-	var table internal.TaskTable
-	var err error
 
 	if dbImpl == "orm" {
-		rep, repErr := orm.NewTaskOrm()
-		table = &rep
-		err = repErr
-	} else {
-		rep, repErr := repository.NewTaskCrud()
-		table = &rep
-		err = repErr
+		table, err := orm.NewTaskTable()
+		return &table, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	return table, nil
+	table, err := repository.NewTaskTable()
+	return &table, err
 }

@@ -7,13 +7,13 @@ import (
 
 func TestOrm(t *testing.T) {
 
-	orm, err := NewTaskOrm()
+	table, err := NewTaskTable()
 
 	if err != nil {
-		t.Errorf("failed to create new task orm, %v", err)
+		t.Errorf("failed to create new task table, %v", err)
 	}
 
-	internal.TestCRUD(t, &orm)
+	internal.TestCRUD(t, &table)
 }
 
 func TestDBConnection(t *testing.T) {

@@ -9,24 +9,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type TaskOrm struct {
-	DBConn *gorm.DB
+type TaskTable struct {
+	db *gorm.DB
 }
 
-func NewTaskOrm() (TaskOrm, error) {
-	DBConn, err := NewConnection()
+func NewTaskTable() (TaskTable, error) {
+	db, err := NewConnection()
 
 	if err != nil {
-		return TaskOrm{}, fmt.Errorf("connecting to database failed, %v", err)
+		return TaskTable{}, fmt.Errorf("connecting to database failed, %v", err)
 	}
 
-	return TaskOrm{DBConn}, nil
+	return TaskTable{db}, nil
 }
 
-func (o *TaskOrm) RetrieveAll() ([]internal.Task, error) {
+func (o *TaskTable) RetrieveAll() ([]internal.Task, error) {
 
 	var tasks []internal.Task
-	result := o.DBConn.Find(&tasks)
+	result := o.db.Find(&tasks)
 
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to list all tasks, %v", result.Error)
@@ -35,9 +35,9 @@ func (o *TaskOrm) RetrieveAll() ([]internal.Task, error) {
 	return tasks, nil
 }
 
-func (o *TaskOrm) FindByID(id int64) (internal.Task, error) {
+func (o *TaskTable) FindByID(id int64) (internal.Task, error) {
 	var task internal.Task
-	result := o.DBConn.First(&task, id)
+	result := o.db.First(&task, id)
 
 	if result.Error != nil {
 		return task, fmt.Errorf("failed to find task by its id, %v", result.Error)
@@ -46,8 +46,8 @@ func (o *TaskOrm) FindByID(id int64) (internal.Task, error) {
 	return task, nil
 }
 
-func (o *TaskOrm) Create(task internal.Task) (int64, error) {
-	result := o.DBConn.Create(&task)
+func (o *TaskTable) Create(task internal.Task) (int64, error) {
+	result := o.db.Create(&task)
 
 	if result.Error != nil {
 		return 0, fmt.Errorf("failed to create task, %v", result.Error)
@@ -56,8 +56,8 @@ func (o *TaskOrm) Create(task internal.Task) (int64, error) {
 	return task.ID, nil
 }
 
-func (o *TaskOrm) Delete(id int64) (int64, error) {
-	result := o.DBConn.Delete(&internal.Task{}, id)
+func (o *TaskTable) Delete(id int64) (int64, error) {
+	result := o.db.Delete(&internal.Task{}, id)
 
 	if result.Error != nil {
 		return 0, fmt.Errorf("failed to delete task, %v", result.Error)
@@ -66,14 +66,14 @@ func (o *TaskOrm) Delete(id int64) (int64, error) {
 	return result.RowsAffected, nil
 }
 
-func (o *TaskOrm) Update(task internal.Task) (int64, error) {
+func (o *TaskTable) Update(task internal.Task) (int64, error) {
 	_, err := o.FindByID(task.ID)
 
 	if err != nil {
 		return 0, err
 	}
 
-	result := o.DBConn.Save(&task)
+	result := o.db.Save(&task)
 
 	if result.Error != nil {
 		return 0, result.Error
@@ -82,10 +82,10 @@ func (o *TaskOrm) Update(task internal.Task) (int64, error) {
 	return result.RowsAffected, nil
 }
 
-func (o *TaskOrm) Filter(completed bool) ([]internal.Task, error) {
+func (o *TaskTable) Filter(completed bool) ([]internal.Task, error) {
 	var tasks []internal.Task
 
-	result := o.DBConn.Where("Completed = ?", completed).Find(&tasks)
+	result := o.db.Where("Completed = ?", completed).Find(&tasks)
 
 	if result.Error != nil {
 		return tasks, fmt.Errorf("failed to filter tasks, %v", result.Error)

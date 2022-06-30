@@ -21,7 +21,7 @@ type TaskServer struct {
 func NewTaskServer() (*TaskServer, error) {
 	server := new(TaskServer)
 
-	table, err := mux.SelectDBImpl()
+	table, err := mux.GetTable()
 
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 
 	if idStr == "" {
-		retrieveTasks(t, w, r)
+		t.tasksHandler(w, r)
 		return
 	}
 

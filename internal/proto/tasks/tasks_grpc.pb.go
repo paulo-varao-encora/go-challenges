@@ -18,10 +18,10 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// TasksGrpcClient is the client API for TasksGrpc service.
+// TaskManagerClient is the client API for TaskManager service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type TasksGrpcClient interface {
+type TaskManagerClient interface {
 	RetrieveAll(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TaskList, error)
 	FilterTasks(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*TaskList, error)
 	RetrieveTaskByID(ctx context.Context, in *TaskID, opts ...grpc.CallOption) (*ExistingTask, error)
@@ -29,219 +29,219 @@ type TasksGrpcClient interface {
 	Update(ctx context.Context, in *UpdateTaskRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
-type tasksGrpcClient struct {
+type taskManagerClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewTasksGrpcClient(cc grpc.ClientConnInterface) TasksGrpcClient {
-	return &tasksGrpcClient{cc}
+func NewTaskManagerClient(cc grpc.ClientConnInterface) TaskManagerClient {
+	return &taskManagerClient{cc}
 }
 
-func (c *tasksGrpcClient) RetrieveAll(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TaskList, error) {
+func (c *taskManagerClient) RetrieveAll(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TaskList, error) {
 	out := new(TaskList)
-	err := c.cc.Invoke(ctx, "/tasks.TasksGrpc/RetrieveAll", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/tasks.TaskManager/RetrieveAll", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tasksGrpcClient) FilterTasks(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*TaskList, error) {
+func (c *taskManagerClient) FilterTasks(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*TaskList, error) {
 	out := new(TaskList)
-	err := c.cc.Invoke(ctx, "/tasks.TasksGrpc/FilterTasks", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/tasks.TaskManager/FilterTasks", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tasksGrpcClient) RetrieveTaskByID(ctx context.Context, in *TaskID, opts ...grpc.CallOption) (*ExistingTask, error) {
+func (c *taskManagerClient) RetrieveTaskByID(ctx context.Context, in *TaskID, opts ...grpc.CallOption) (*ExistingTask, error) {
 	out := new(ExistingTask)
-	err := c.cc.Invoke(ctx, "/tasks.TasksGrpc/RetrieveTaskByID", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/tasks.TaskManager/RetrieveTaskByID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tasksGrpcClient) Create(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*TaskID, error) {
+func (c *taskManagerClient) Create(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*TaskID, error) {
 	out := new(TaskID)
-	err := c.cc.Invoke(ctx, "/tasks.TasksGrpc/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/tasks.TaskManager/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tasksGrpcClient) Update(ctx context.Context, in *UpdateTaskRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *taskManagerClient) Update(ctx context.Context, in *UpdateTaskRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/tasks.TasksGrpc/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/tasks.TaskManager/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TasksGrpcServer is the server API for TasksGrpc service.
-// All implementations must embed UnimplementedTasksGrpcServer
+// TaskManagerServer is the server API for TaskManager service.
+// All implementations must embed UnimplementedTaskManagerServer
 // for forward compatibility
-type TasksGrpcServer interface {
+type TaskManagerServer interface {
 	RetrieveAll(context.Context, *Empty) (*TaskList, error)
 	FilterTasks(context.Context, *FilterRequest) (*TaskList, error)
 	RetrieveTaskByID(context.Context, *TaskID) (*ExistingTask, error)
 	Create(context.Context, *CreateTaskRequest) (*TaskID, error)
 	Update(context.Context, *UpdateTaskRequest) (*Empty, error)
-	mustEmbedUnimplementedTasksGrpcServer()
+	mustEmbedUnimplementedTaskManagerServer()
 }
 
-// UnimplementedTasksGrpcServer must be embedded to have forward compatible implementations.
-type UnimplementedTasksGrpcServer struct {
+// UnimplementedTaskManagerServer must be embedded to have forward compatible implementations.
+type UnimplementedTaskManagerServer struct {
 }
 
-func (UnimplementedTasksGrpcServer) RetrieveAll(context.Context, *Empty) (*TaskList, error) {
+func (UnimplementedTaskManagerServer) RetrieveAll(context.Context, *Empty) (*TaskList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RetrieveAll not implemented")
 }
-func (UnimplementedTasksGrpcServer) FilterTasks(context.Context, *FilterRequest) (*TaskList, error) {
+func (UnimplementedTaskManagerServer) FilterTasks(context.Context, *FilterRequest) (*TaskList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FilterTasks not implemented")
 }
-func (UnimplementedTasksGrpcServer) RetrieveTaskByID(context.Context, *TaskID) (*ExistingTask, error) {
+func (UnimplementedTaskManagerServer) RetrieveTaskByID(context.Context, *TaskID) (*ExistingTask, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RetrieveTaskByID not implemented")
 }
-func (UnimplementedTasksGrpcServer) Create(context.Context, *CreateTaskRequest) (*TaskID, error) {
+func (UnimplementedTaskManagerServer) Create(context.Context, *CreateTaskRequest) (*TaskID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (UnimplementedTasksGrpcServer) Update(context.Context, *UpdateTaskRequest) (*Empty, error) {
+func (UnimplementedTaskManagerServer) Update(context.Context, *UpdateTaskRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedTasksGrpcServer) mustEmbedUnimplementedTasksGrpcServer() {}
+func (UnimplementedTaskManagerServer) mustEmbedUnimplementedTaskManagerServer() {}
 
-// UnsafeTasksGrpcServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to TasksGrpcServer will
+// UnsafeTaskManagerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TaskManagerServer will
 // result in compilation errors.
-type UnsafeTasksGrpcServer interface {
-	mustEmbedUnimplementedTasksGrpcServer()
+type UnsafeTaskManagerServer interface {
+	mustEmbedUnimplementedTaskManagerServer()
 }
 
-func RegisterTasksGrpcServer(s grpc.ServiceRegistrar, srv TasksGrpcServer) {
-	s.RegisterService(&TasksGrpc_ServiceDesc, srv)
+func RegisterTaskManagerServer(s grpc.ServiceRegistrar, srv TaskManagerServer) {
+	s.RegisterService(&TaskManager_ServiceDesc, srv)
 }
 
-func _TasksGrpc_RetrieveAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TaskManager_RetrieveAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TasksGrpcServer).RetrieveAll(ctx, in)
+		return srv.(TaskManagerServer).RetrieveAll(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tasks.TasksGrpc/RetrieveAll",
+		FullMethod: "/tasks.TaskManager/RetrieveAll",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksGrpcServer).RetrieveAll(ctx, req.(*Empty))
+		return srv.(TaskManagerServer).RetrieveAll(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TasksGrpc_FilterTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TaskManager_FilterTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FilterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TasksGrpcServer).FilterTasks(ctx, in)
+		return srv.(TaskManagerServer).FilterTasks(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tasks.TasksGrpc/FilterTasks",
+		FullMethod: "/tasks.TaskManager/FilterTasks",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksGrpcServer).FilterTasks(ctx, req.(*FilterRequest))
+		return srv.(TaskManagerServer).FilterTasks(ctx, req.(*FilterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TasksGrpc_RetrieveTaskByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TaskManager_RetrieveTaskByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TaskID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TasksGrpcServer).RetrieveTaskByID(ctx, in)
+		return srv.(TaskManagerServer).RetrieveTaskByID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tasks.TasksGrpc/RetrieveTaskByID",
+		FullMethod: "/tasks.TaskManager/RetrieveTaskByID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksGrpcServer).RetrieveTaskByID(ctx, req.(*TaskID))
+		return srv.(TaskManagerServer).RetrieveTaskByID(ctx, req.(*TaskID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TasksGrpc_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TaskManager_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateTaskRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TasksGrpcServer).Create(ctx, in)
+		return srv.(TaskManagerServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tasks.TasksGrpc/Create",
+		FullMethod: "/tasks.TaskManager/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksGrpcServer).Create(ctx, req.(*CreateTaskRequest))
+		return srv.(TaskManagerServer).Create(ctx, req.(*CreateTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TasksGrpc_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TaskManager_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateTaskRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TasksGrpcServer).Update(ctx, in)
+		return srv.(TaskManagerServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tasks.TasksGrpc/Update",
+		FullMethod: "/tasks.TaskManager/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksGrpcServer).Update(ctx, req.(*UpdateTaskRequest))
+		return srv.(TaskManagerServer).Update(ctx, req.(*UpdateTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// TasksGrpc_ServiceDesc is the grpc.ServiceDesc for TasksGrpc service.
+// TaskManager_ServiceDesc is the grpc.ServiceDesc for TaskManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var TasksGrpc_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "tasks.TasksGrpc",
-	HandlerType: (*TasksGrpcServer)(nil),
+var TaskManager_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "tasks.TaskManager",
+	HandlerType: (*TaskManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "RetrieveAll",
-			Handler:    _TasksGrpc_RetrieveAll_Handler,
+			Handler:    _TaskManager_RetrieveAll_Handler,
 		},
 		{
 			MethodName: "FilterTasks",
-			Handler:    _TasksGrpc_FilterTasks_Handler,
+			Handler:    _TaskManager_FilterTasks_Handler,
 		},
 		{
 			MethodName: "RetrieveTaskByID",
-			Handler:    _TasksGrpc_RetrieveTaskByID_Handler,
+			Handler:    _TaskManager_RetrieveTaskByID_Handler,
 		},
 		{
 			MethodName: "Create",
-			Handler:    _TasksGrpc_Create_Handler,
+			Handler:    _TaskManager_Create_Handler,
 		},
 		{
 			MethodName: "Update",
-			Handler:    _TasksGrpc_Update_Handler,
+			Handler:    _TaskManager_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

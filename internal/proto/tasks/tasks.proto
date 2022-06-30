@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 
 package tasks;
 
-service TasksGrpc {
+service TaskManager {
     rpc RetrieveAll(Empty) returns (TaskList) {
         option (google.api.http) = {
             get: "/v1/tasks"

@@ -12,13 +12,13 @@ import (
 
 func TestRepository(t *testing.T) {
 
-	crud, err := NewTaskCrud()
+	table, err := NewTaskTable()
 
 	if err != nil {
-		t.Errorf("failed to create new task crud, %v", err)
+		t.Errorf("failed to create new task table, %v", err)
 	}
 
-	internal.TestCRUD(t, &crud)
+	internal.TestCRUD(t, &table)
 }
 
 func TestDBConnection(t *testing.T) {
