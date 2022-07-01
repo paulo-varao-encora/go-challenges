@@ -9,10 +9,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// Implements internal.TaskTable interface
 type TaskTable struct {
 	db *gorm.DB
 }
 
+// Build new ORM TaskTable so services may
+// access database
 func NewTaskTable() (TaskTable, error) {
 	db, err := NewConnection()
 
@@ -67,8 +70,9 @@ func (o *TaskTable) Delete(id int64) (int64, error) {
 }
 
 func (o *TaskTable) Update(task internal.Task) (int64, error) {
+	// verify if there is a task having input task ID
+	// and send an error if no task was found
 	_, err := o.FindByID(task.ID)
-
 	if err != nil {
 		return 0, err
 	}
@@ -94,6 +98,7 @@ func (o *TaskTable) Filter(completed bool) ([]internal.Task, error) {
 	return tasks, nil
 }
 
+// Run 'source env.sh' in bash to create/update env variables
 func NewConnection() (*gorm.DB, error) {
 	user := os.Getenv("DB_USER")
 	pass := os.Getenv("DB_PASS")

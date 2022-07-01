@@ -130,6 +130,8 @@ func newServer(t testing.TB, address string) (*grpc.Server, net.Listener) {
 		t.Errorf("failed to build server: %v", err)
 	}
 
+	// Used goroutine to start the server
+	// so tests may run concurrently
 	go s.Serve(lis)
 
 	return s, lis

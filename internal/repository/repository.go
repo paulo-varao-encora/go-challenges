@@ -9,10 +9,13 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+// Implements internal.TaskTable interface
 type TaskTable struct {
 	db *sql.DB
 }
 
+// Build new Repository TaskTable so services may
+// access database
 func NewTaskTable() (TaskTable, error) {
 	db, err := NewConnection()
 
@@ -98,7 +101,7 @@ func (c *TaskTable) Filter(completed bool) ([]internal.Task, error) {
 	return getTasksFromRows(rows)
 }
 
-// to create env variables run: source env.sh
+// Run 'source env.sh' in bash to create/update env variables
 func NewConnection() (*sql.DB, error) {
 	address := os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT")
 	cfg := mysql.Config{
@@ -112,6 +115,7 @@ func NewConnection() (*sql.DB, error) {
 	return sql.Open("mysql", cfg.FormatDSN())
 }
 
+// Convert *sql.Rows to []internal.Task
 func getTasksFromRows(rows *sql.Rows) ([]internal.Task, error) {
 	var tasks []internal.Task
 

@@ -18,6 +18,7 @@ type TaskServer struct {
 	http.Handler
 }
 
+// Create a new REST API TaskServer
 func NewTaskServer() (*TaskServer, error) {
 	server := new(TaskServer)
 
@@ -55,6 +56,7 @@ func (t *TaskServer) tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// TODO: remove this handler and use one single handler
 func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	if auth := checkAuthorization(w, r); !auth {
@@ -87,8 +89,9 @@ func (t *TaskServer) singleTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
+	// check if 'completed' path variable exists
+	// and return all tasks if it was not found
 	filter := r.URL.Query().Get("completed")
-
 	if filter == "" {
 		tasks, err := t.table.RetrieveAll()
 		sendTasks(w, tasks, err)
@@ -142,6 +145,8 @@ func updateTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
 	}
 }
 
+// Read request body and process request
+// using processTask callback function
 func processRequestBodyTask(t *TaskServer, w http.ResponseWriter, r *http.Request, id int64,
 	processTask func(t *TaskServer, w http.ResponseWriter, task internal.Task)) {
 	var task internal.Task
@@ -159,6 +164,9 @@ func processRequestBodyTask(t *TaskServer, w http.ResponseWriter, r *http.Reques
 	} else if task.Name == "" {
 		errorHandler(w, http.StatusBadRequest, "can't process a nameless task")
 	} else {
+		// if id > 0, processTask corresponds to updateTask method.
+		// In this case, id value will be read from task object.
+		// Otherwise, processTask corresponds to createTask method.
 		if id > 0 {
 			task.ID = id
 		}
@@ -167,6 +175,8 @@ func processRequestBodyTask(t *TaskServer, w http.ResponseWriter, r *http.Reques
 
 }
 
+// Write a response body having a tasks
+// list or a single task
 func sendTasks(w http.ResponseWriter, respBody interface{}, err error) {
 	if err != nil {
 		errorHandler(w, http.StatusInternalServerError,
@@ -184,6 +194,8 @@ func sendTasks(w http.ResponseWriter, respBody interface{}, err error) {
 
 }
 
+// Verify if http request header has valid token
+// (the same stored in environment variable)
 func checkAuthorization(w http.ResponseWriter, r *http.Request) bool {
 
 	token := os.Getenv("API_TOKEN")
@@ -197,6 +209,7 @@ func checkAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
+// Standard method to handle errors
 func errorHandler(w http.ResponseWriter, status int, msg string) {
 	w.WriteHeader(status)
 	fmt.Fprint(w, msg)

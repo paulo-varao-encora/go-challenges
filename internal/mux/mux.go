@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+// Select how to connect to database (Repository
+// or ORM) based on environment variable value
 func GetTable() (internal.TaskTable, error) {
 	dbImpl := os.Getenv("DB_IMPL")
 

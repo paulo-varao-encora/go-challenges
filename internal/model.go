@@ -6,6 +6,9 @@ type Task struct {
 	Completed bool
 }
 
+// TaskTable defines the database methods. It
+// sets the (CRUD) functions that Repository
+// and ORM must implement
 type TaskTable interface {
 	RetrieveAll() ([]Task, error)
 	FindByID(id int64) (Task, error)

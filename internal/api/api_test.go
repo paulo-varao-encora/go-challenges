@@ -23,6 +23,7 @@ var bearerToken = os.Getenv("API_TOKEN")
 var request *http.Request
 var response *httptest.ResponseRecorder
 
+// TODO: split into multiple test functions
 func TestCrudServer(t *testing.T) {
 	server, err := NewTaskServer()
 

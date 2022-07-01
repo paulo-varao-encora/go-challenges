@@ -18,6 +18,8 @@ import (
 
 func main() {
 	flag.Parse()
+
+	// gRPC server on port 5001
 	port := flag.Int("port", 5001, "The server port")
 
 	s, lis, err := proto.NewTaskServer(fmt.Sprintf("localhost:%d", *port))
@@ -49,6 +51,7 @@ func main() {
 		log.Fatalln("Failed to register gateway:", err)
 	}
 
+	// gRPC gateway server on port 5002
 	gwServer := &http.Server{
 		Addr:    ":5002",
 		Handler: gwmux,
