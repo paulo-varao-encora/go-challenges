@@ -23,7 +23,6 @@ var bearerToken = os.Getenv("API_TOKEN")
 var request *http.Request
 var response *httptest.ResponseRecorder
 
-// TODO: split into multiple test functions
 func TestCrudServer(t *testing.T) {
 	server, err := NewTaskServer()
 
@@ -50,14 +49,6 @@ func TestCrudServer(t *testing.T) {
 		assertNewID(t, response.Body.String())
 	})
 
-	t.Run("return bad request when creating an empty task", func(t *testing.T) {
-		body := newTask(t, "", false) // nil
-
-		updateRequestAndResponse(t, server, http.MethodPost, "/tasks", body)
-
-		assertStatus(t, response.Code, http.StatusBadRequest)
-	})
-
 	t.Run("get single task by its ID", func(t *testing.T) {
 		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/1", nil)
 
@@ -74,50 +65,12 @@ func TestCrudServer(t *testing.T) {
 		assertSingleTask(t, task, internal.DefaultTasks[0])
 	})
 
-	t.Run("redirect to /tasks case id is empty", func(t *testing.T) {
-		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/", nil)
-
-		taskRedirect(t)
-	})
-
-	t.Run("send bad request response case find invalid id", func(t *testing.T) {
-		updateRequestAndResponse(t, server, http.MethodGet, "/tasks/100", nil)
-
-		assertStatus(t, response.Code, http.StatusBadRequest)
-	})
-
 	t.Run("update single task by its id", func(t *testing.T) {
 		body := newTask(t, "Sample task updated", false)
 
 		updateRequestAndResponse(t, server, http.MethodPut, "/tasks/5", body)
 
 		assertStatus(t, response.Code, http.StatusOK)
-	})
-
-	t.Run("send bad request response case update invalid id", func(t *testing.T) {
-		body := newTask(t, "Sample task updated", false)
-
-		updateRequestAndResponse(t, server, http.MethodPut, "/tasks/100", body)
-
-		assertStatus(t, response.Code, http.StatusBadRequest)
-	})
-
-	t.Run("send bad request response case update having no changes", func(t *testing.T) {
-		body := newTask(t, "Sample task updated", false)
-
-		updateRequestAndResponse(t, server, http.MethodPut, "/tasks/5", body)
-
-		assertStatus(t, response.Code, http.StatusBadRequest)
-	})
-
-	t.Run("send bad request response case method is invalid for /tasks", func(t *testing.T) {
-		updateRequestAndResponse(t, server, http.MethodPut, "/tasks", nil)
-		assertStatus(t, response.Code, http.StatusBadRequest)
-	})
-
-	t.Run("send bad request response case method is invalid for /tasks/id", func(t *testing.T) {
-		updateRequestAndResponse(t, server, http.MethodPost, "/tasks/1", nil)
-		assertStatus(t, response.Code, http.StatusBadRequest)
 	})
 
 	t.Run("list all completed tasks", func(t *testing.T) {
@@ -134,17 +87,6 @@ func TestCrudServer(t *testing.T) {
 		}
 	})
 
-	t.Run("redirect to /tasks case completed is empty", func(t *testing.T) {
-		updateRequestAndResponse(t, server, http.MethodGet, "/tasks?completed=", nil)
-
-		taskRedirect(t)
-	})
-
-	t.Run("send bad request response case completed param is invalid", func(t *testing.T) {
-		updateRequestAndResponse(t, server, http.MethodGet, "/tasks?completed=x", nil)
-		assertStatus(t, response.Code, http.StatusBadRequest)
-	})
-
 	t.Run("get unauthorized status when sending bad token", func(t *testing.T) {
 		request, _ = http.NewRequest(http.MethodGet, "/tasks", nil)
 
@@ -155,6 +97,41 @@ func TestCrudServer(t *testing.T) {
 
 		assertStatus(t, response.Code, http.StatusUnauthorized)
 	})
+
+	badRequestTests := map[string]struct {
+		method string
+		url    string
+		body   io.Reader
+	}{
+		"bad request: create empty task": {http.MethodPost, "/tasks", newTask(t, "", false)},
+		"bad request: find invalid id":   {http.MethodGet, "/tasks/100", nil},
+		"bad request: update invalid id": {http.MethodPut, "/tasks/100",
+			newTask(t, "Sample task updated", false)},
+		"bad request: update having no changes": {http.MethodPut, "/tasks/5",
+			newTask(t, "Sample task updated", false)},
+		"bad request: invalid method for /tasks":    {http.MethodPut, "/tasks", nil},
+		"bad request: invalid method for /tasks/id": {http.MethodPost, "/tasks/1", nil},
+		"bad request: invalid completed param":      {http.MethodGet, "/tasks?completed=x", nil},
+	}
+
+	for name, tc := range badRequestTests {
+		t.Run(name, func(t *testing.T) {
+			updateRequestAndResponse(t, server, tc.method, tc.url, tc.body)
+			assertStatus(t, response.Code, http.StatusBadRequest)
+		})
+	}
+
+	redirectTests := map[string]string{
+		"redirect: id is empty":        "/tasks/",
+		"redirect: completed is empty": "/tasks?completed=",
+	}
+
+	for name, tc := range redirectTests {
+		t.Run(name, func(t *testing.T) {
+			updateRequestAndResponse(t, server, http.MethodGet, tc, nil)
+			taskRedirect(t)
+		})
+	}
 }
 
 func taskRedirect(t testing.TB) {
