@@ -101,23 +101,23 @@ func retrieveTasks(t *TaskServer, w http.ResponseWriter, r *http.Request) {
 	completed, err := strconv.ParseBool(filter)
 
 	if err != nil {
-		errorHandler(w, http.StatusBadRequest, fmt.Sprintf("failed to filter param, %v", err))
-	} else {
-		tasks, err := t.table.Filter(completed)
-		sendTasks(w, tasks, err)
+		errorHandler(w, http.StatusBadRequest, fmt.Sprintf("invalid filter param, %v", err))
+		return
 	}
 
+	tasks, err := t.table.Filter(completed)
+	sendTasks(w, tasks, err)
 }
 
 func createTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
 	id, err := t.table.Create(task)
 
 	if err != nil {
-		errorHandler(w, http.StatusInternalServerError,
-			fmt.Sprintf("failed to create task in database, %v", err))
-	} else {
-		fmt.Fprint(w, id)
+		errorHandler(w, http.StatusInternalServerError, err.Error())
+		return
 	}
+
+	fmt.Fprint(w, id)
 }
 
 func retrieveTaskByID(t *TaskServer, w http.ResponseWriter, id int64) {
@@ -126,9 +126,10 @@ func retrieveTaskByID(t *TaskServer, w http.ResponseWriter, id int64) {
 	if err != nil && (strings.Contains(err.Error(), "sql: no rows in result set") ||
 		strings.Contains(err.Error(), "record not found")) {
 		errorHandler(w, http.StatusBadRequest, "invalid task id")
-	} else {
-		sendTasks(w, task, err)
+		return
 	}
+
+	sendTasks(w, task, err)
 }
 
 func updateTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
@@ -137,12 +138,16 @@ func updateTask(t *TaskServer, w http.ResponseWriter, task internal.Task) {
 	if err != nil && !strings.Contains(err.Error(), "record not found") {
 		errorHandler(w, http.StatusInternalServerError,
 			fmt.Sprintf("failed to update task %v in database, %v", task.ID, err))
-	} else if rows < 1 {
+		return
+	}
+
+	if rows < 1 {
 		errorHandler(w, http.StatusBadRequest,
 			fmt.Sprintf("no task was affected: invalid id %v or no changes were detected", task.ID))
-	} else {
-		w.WriteHeader(http.StatusOK)
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // Read request body and process request
@@ -161,17 +166,21 @@ func processRequestBodyTask(t *TaskServer, w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		errorHandler(w, http.StatusInternalServerError,
 			fmt.Sprintf("failed to decode request body to json, %v", err))
-	} else if task.Name == "" {
-		errorHandler(w, http.StatusBadRequest, "can't process a nameless task")
-	} else {
-		// if id > 0, processTask corresponds to updateTask method.
-		// In this case, id value will be read from task object.
-		// Otherwise, processTask corresponds to createTask method.
-		if id > 0 {
-			task.ID = id
-		}
-		processTask(t, w, task)
+		return
 	}
+
+	if task.Name == "" {
+		errorHandler(w, http.StatusBadRequest, "can't process a nameless task")
+		return
+	}
+
+	// if id > 0, processTask corresponds to updateTask method.
+	// In this case, id value will be read from task object.
+	// Otherwise, processTask corresponds to createTask method.
+	if id > 0 {
+		task.ID = id
+	}
+	processTask(t, w, task)
 
 }
 
